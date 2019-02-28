@@ -3,11 +3,11 @@ import os
 import subprocess
 
 inputs = [
-    "inputs/a_example.in",
-    "inputs/b_should_be_easy.in",
-    "inputs/c_no_hurry.in",
-    "inputs/d_metropolis.in",
-    "inputs/e_high_bonus.in",
+    "inputs/a_example.txt",
+    "inputs/b_lovely_landscapes.txt",
+    "inputs/c_memorable_moments.txt",
+    "inputs/d_pet_pictures.txt",
+    "inputs/e_shiny_selfies.txt",
 ]
 
 main_file = sys.argv[1]
