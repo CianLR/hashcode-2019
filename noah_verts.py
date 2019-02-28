@@ -3,36 +3,35 @@ import sys
 from read_input import read_input
 
 def calc_score(prev_tag_set, nex_tag_set):
-    return min(len(prev_tag_set & nex_tag_set),
-               len(prev_tag_set - nex_tag_set),
-               len(nex_tag_set - prev_tag_set))
+    a = len(prev_tag_set & nex_tag_set)
+    if a == 0:
+        return 0
+    b = len(prev_tag_set - nex_tag_set)
+    if b == 0:
+        return 0
+    c = len(nex_tag_set - prev_tag_set)
+    return min(a, b, c)
 
 def create_pairs(inp):
     outs = [] # (is_horizontal, pair_a, pair_b, tag_set, tmp_id)
     used = set()
-    for i in inp:
-        if i.i in used:
-            continue
-        if i.horizontal:
-            used.add(i.i)
-            outs.append((True, i, None, i.tag_set, len(outs)))
-            continue
-        for j in inp:
-            if i.i == j.i:
-                continue
-            if j.horizontal or j.i in used:
-                continue
-            # todo: choose a better j
-            used.add(i.i)
-            used.add(j.i)
-            outs.append((False, i, j, (i.tag_set | j.tag_set), len(outs)))
-            break
-    if len(outs) % 100 == 0:
-        sys.stderr.write('Creating pairs {}\n'.format(len(outs)))
+
+    horiz = [p for p in inp if p.horizontal]
+
+    for i in horiz:
+        outs.append((True, i, None, i.tag_set, len(outs)))
+
+    verts = [p for p in inp if p.vertical]
+    verts = sorted(verts, key=lambda v: len(v.tag_set))
+    for p in range(0, len(verts)//2):
+        i = verts[p]
+        j = verts[len(verts)-1-p]
+        outs.append((False, i, j, (i.tag_set | j.tag_set), len(outs)))
     return outs
 
+BEST_SCORE_THRESH = 3
 def get_next(prev, slides, used_tmp_ids):
-    BEST_SCORE_THRESH = 2
+    global BEST_SCORE_THRESH
     best_score = -1
     best = None
 
@@ -49,7 +48,10 @@ def get_next(prev, slides, used_tmp_ids):
             if best_score > BEST_SCORE_THRESH:
                 return best
 
-    if best is None:
+    # No best found, try to choose a random unused one.
+    if best is None or best_score < 1:
+        # Couldn't find any at thresh
+        BEST_SCORE_THRESH = max(BEST_SCORE_THRESH-1, 1)
         for other in slides:
             is_horiz, pair_a, pair_b, other_tag_set, other_tmp_id = other
             if other_tmp_id not in used_tmp_ids:
@@ -60,6 +62,8 @@ def main():
     import random
     inp, tag2photo = read_input()
     random.shuffle(inp)
+
+    sys.stderr.write('About to choose pairs.\n')
 
     slides = create_pairs(inp)
 
@@ -93,6 +97,12 @@ def main():
         # debug
         if len(outs) % 100 == 0:
             sys.stderr.write('{}!\n'.format(len(outs)))
+            # Clean out slides
+            slides = [s for s in slides if s[4] not in used_ids]
+            slides = sorted(slides, key=lambda s:-len(s[3]))
+
+        if len(outs) > 50100:
+            break
     print(len(outs))
     for s in outs:
         print(*s)
