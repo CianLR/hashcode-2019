@@ -2,7 +2,7 @@ from read_input import *
 
 
 def main():
-    photos = read_input()
+    photos, _ = read_input()
     slides = []
     vert = []
     for p in photos:
