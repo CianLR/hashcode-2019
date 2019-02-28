@@ -29,7 +29,7 @@ def create_pairs(inp):
         outs.append((False, i, j, (i.tag_set | j.tag_set), len(outs)))
     return outs
 
-BEST_SCORE_THRESH = 3
+BEST_SCORE_THRESH = 10
 def get_next(prev, slides, used_tmp_ids):
     global BEST_SCORE_THRESH
     best_score = -1
@@ -48,10 +48,11 @@ def get_next(prev, slides, used_tmp_ids):
             if best_score > BEST_SCORE_THRESH:
                 return best
 
-    # No best found, try to choose a random unused one.
-    if best is None or best_score < 1:
-        # Couldn't find any at thresh
+    if best_score < BEST_SCORE_THRESH:
         BEST_SCORE_THRESH = max(BEST_SCORE_THRESH-1, 1)
+    # No best found, try to choose a random unused one.
+    if best is None:
+        # Couldn't find any at thresh
         for other in slides:
             is_horiz, pair_a, pair_b, other_tag_set, other_tmp_id = other
             if other_tmp_id not in used_tmp_ids:
