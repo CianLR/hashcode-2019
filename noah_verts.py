@@ -6,10 +6,8 @@ def calc_score(prev_tag_set, nex_tag_set):
     a = len(prev_tag_set & nex_tag_set)
     if a == 0:
         return 0
-    b = len(prev_tag_set - nex_tag_set)
-    if b == 0:
-        return 0
-    c = len(nex_tag_set - prev_tag_set)
+    b = len(prev_tag_set) - a
+    c = len(nex_tag_set) - a
     return min(a, b, c)
 
 def create_pairs(inp):
@@ -29,9 +27,10 @@ def create_pairs(inp):
         outs.append((False, i, j, (i.tag_set | j.tag_set), len(outs)))
     return outs
 
-BEST_SCORE_THRESH = 10
+BEST_SCORE_THRESH = 2
 def get_next(prev, slides, used_tmp_ids):
     global BEST_SCORE_THRESH
+    calc_score_func = calc_score
     best_score = -1
     best = None
 
@@ -41,7 +40,7 @@ def get_next(prev, slides, used_tmp_ids):
         is_horiz, pair_a, pair_b, other_tag_set, other_tmp_id = other
         if other_tmp_id in used_tmp_ids:
             continue
-        s = calc_score(prev_tag_set, other_tag_set)
+        s = calc_score_func(prev_tag_set, other_tag_set)
         if s > best_score:
             best_score = s
             best = other
@@ -49,7 +48,7 @@ def get_next(prev, slides, used_tmp_ids):
                 return best
 
     if best_score < BEST_SCORE_THRESH:
-        BEST_SCORE_THRESH = max(BEST_SCORE_THRESH-1, 1)
+        BEST_SCORE_THRESH = max(BEST_SCORE_THRESH-1, 0)
     # No best found, try to choose a random unused one.
     if best is None:
         # Couldn't find any at thresh
@@ -97,13 +96,10 @@ def main():
 
         # debug
         if len(outs) % 100 == 0:
-            sys.stderr.write('{}!\n'.format(len(outs)))
+            sys.stderr.write('{} (thresh = {})!\n'.format(len(outs), BEST_SCORE_THRESH))
             # Clean out slides
             slides = [s for s in slides if s[4] not in used_ids]
             slides = sorted(slides, key=lambda s:-len(s[3]))
-
-        if len(outs) > 50100:
-            break
     print(len(outs))
     for s in outs:
         print(*s)
